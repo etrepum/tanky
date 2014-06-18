@@ -52,8 +52,8 @@ public class TerrainBuilder {
         float[] points = new float[size];
         float displace = m_displace * m_height;
         // Set the initial left and right points
-        points[0] = calcPoint(0, m_height, displace * (float)0.5);
-        points[size - 1] = calcPoint(0, m_height, displace * (float)0.5);
+        points[0] = calcPoint(0, m_height, displace * 0.5f);
+        points[size - 1] = calcPoint(0, m_height, displace * 0.5f);
         ArrayDeque<TerrainStep> steps = new ArrayDeque<TerrainStep>(size / 2);
         if (size > 2) {
             steps.add(new TerrainStep(0, size - 1, displace));
