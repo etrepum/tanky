@@ -105,9 +105,9 @@ public class TankyGame extends ApplicationAdapter {
 
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = tankShape;
-        fixtureDef.density = 0.5f;
-        fixtureDef.friction = 0.4f;
-        fixtureDef.restitution = 0.6f;
+        fixtureDef.density = 10f;
+        fixtureDef.friction = 0.8f;
+        fixtureDef.restitution = 0.2f;
 
         tankBody = world.createBody(bodyDef);
         tankBody.createFixture(fixtureDef);
