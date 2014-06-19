@@ -7,7 +7,7 @@ import java.util.Random;
  * http://www.somethinghitme.com/2013/11/11/simple-2d-terrain-with-midpoint-displacement/
  */
 public class TerrainBuilder {
-    final float m_width;
+    final int m_steps;
     final float m_height;
     final float m_roughness;
     final float m_displace;
@@ -25,9 +25,9 @@ public class TerrainBuilder {
             return m_lo + (m_hi - m_lo) / 2;
         }
     }
-    TerrainBuilder(Random rng, float width, float height, float displace, float roughness) {
+    TerrainBuilder(Random rng, int steps, float height, float displace, float roughness) {
         m_rng = rng;
-        m_width = width;
+        m_steps = steps;
         m_height = height;
         m_displace = displace;
         m_roughness = roughness;
@@ -48,7 +48,7 @@ public class TerrainBuilder {
     }
     float[] build() {
         // rounded up to an odd number
-        int size = (int)m_width | 1;
+        int size = m_steps | 1;
         float[] points = new float[size];
         float displace = m_displace * m_height;
         // Set the initial left and right points
