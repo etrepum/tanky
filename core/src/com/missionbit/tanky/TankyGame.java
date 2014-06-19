@@ -11,7 +11,6 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.utils.Logger;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -20,6 +19,7 @@ public class TankyGame extends ApplicationAdapter {
     private static final String TAG = TankyGame.class.getSimpleName();
     static final float WIDTH = 800;
     static final float HEIGHT = 480;
+    static final int STEPS = (int)WIDTH;
 
     float absTime = 0;
     float[] terrain;
@@ -49,7 +49,6 @@ public class TankyGame extends ApplicationAdapter {
     private void fire(Body body, Vector2 point) {
         Vector2 delta = new Vector2(WIDTH/2, HEIGHT/2).sub(point);
         Vector2 pos = delta.cpy().nor().scl(20).add(body.getPosition());
-        Gdx.app.log(TAG, delta.toString() + " / " + point.toString());
         bullets.add(Bullet.createBullet(world, pos, delta));
     }
 
@@ -63,8 +62,7 @@ public class TankyGame extends ApplicationAdapter {
 	}
 
     private void reset() {
-        int steps = (int)WIDTH;
-        terrain = new TerrainBuilder(new Random(), steps, HEIGHT, 0.6f, 0.5f).build();
+        terrain = new TerrainBuilder(new Random(), STEPS, HEIGHT, 0.6f, 0.5f).build();
         if (terrainBody != null) {
             world.destroyBody(terrainBody);
         }
@@ -76,7 +74,7 @@ public class TankyGame extends ApplicationAdapter {
         }
         bullets.clear();
 
-        terrainBody = Terrain.createBody(world, WIDTH, HEIGHT, terrain, steps);
+        terrainBody = Terrain.createBody(world, WIDTH, HEIGHT, terrain, STEPS);
         tankBody = Tank.createBody(world, new Vector2(WIDTH/2, HEIGHT+10));
 
     }
@@ -103,7 +101,7 @@ public class TankyGame extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        Terrain.render(shapeRenderer, Color.YELLOW, WIDTH, terrain, (int)WIDTH);
+        Terrain.render(shapeRenderer, Color.YELLOW, WIDTH, terrain, STEPS);
         Vector2 tankPos = tankBody.getPosition();
         Tank.render(shapeRenderer, Color.BLACK, tankPos, tankBody.getAngle());
         if (touchPoint != null) {
