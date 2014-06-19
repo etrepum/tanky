@@ -1,5 +1,7 @@
 package com.missionbit.tanky;
 
+import com.badlogic.gdx.math.MathUtils;
+
 import java.util.ArrayDeque;
 import java.util.Random;
 
@@ -12,6 +14,7 @@ public class TerrainBuilder {
     final float m_roughness;
     final float m_displace;
     final Random m_rng;
+
     static final class TerrainStep {
         final int m_lo;
         final int m_hi;
@@ -25,6 +28,7 @@ public class TerrainBuilder {
             return m_lo + (m_hi - m_lo) / 2;
         }
     }
+
     TerrainBuilder(Random rng, int steps, float height, float displace, float roughness) {
         m_rng = rng;
         m_steps = steps;
@@ -32,20 +36,14 @@ public class TerrainBuilder {
         m_displace = displace;
         m_roughness = roughness;
     }
+
     private float calcPoint(float lo, float hi, float displace) {
-        return ((lo + hi) / 2) + (m_rng.nextFloat() * 2 * displace) - displace;
+        return MathUtils.clamp(
+                ((lo + hi) / 2) + (m_rng.nextFloat() * 2 * displace) - displace,
+                0,
+                m_height);
     }
 
-    private void recursive_midpoint(float[] points, int lo, int hi, float a, float b, float displace) {
-        int mid = lo + (hi - lo) / 2;
-        if (mid > lo) {
-            displace = displace * m_roughness;
-            float c = calcPoint(a, b, displace);
-            points[mid] = c;
-            recursive_midpoint(points, lo, mid, a, c, displace);
-            recursive_midpoint(points, mid, hi, c, b, displace);
-        }
-    }
     float[] build() {
         // rounded up to an odd number
         int size = m_steps | 1;

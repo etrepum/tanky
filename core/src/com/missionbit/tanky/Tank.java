@@ -15,15 +15,19 @@ import com.badlogic.gdx.physics.box2d.World;
  * Created by bob on 6/18/14.
  */
 public final class Tank {
-    static final float TANK_BASE = 40;
-    static final float TANK_TOP = 30;
-    static final float TANK_HEIGHT = 25;
+    // an M1 tank is about 10 meters long
+    static final float TANK_BASE   = 10.0f;
+    static final float TANK_TOP    = 7.5f;
+    static final float TANK_HEIGHT = 6.25f;
+    static final float DENSITY     = 10.0f;
+    static final float FRICTION    = 0.8f;
+    static final float RESTITUTION = 0.2f;
 
     public static Body createBody(World world, Vector2 position) {
         FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.density = 10f;
-        fixtureDef.friction = 0.8f;
-        fixtureDef.restitution = 0.2f;
+        fixtureDef.density = DENSITY;
+        fixtureDef.friction = FRICTION;
+        fixtureDef.restitution = RESTITUTION;
         PolygonShape tankShape = new PolygonShape();
         tankShape.set(new Vector2[]{
                 new Vector2(TANK_BASE / 2, 0),
@@ -46,8 +50,14 @@ public final class Tank {
         Matrix4 matrix = new Matrix4(shapeRenderer.getTransformMatrix());
         shapeRenderer.translate(position.x, position.y, 0);
         shapeRenderer.rotate(0, 0, 1, MathUtils.radDeg * angleRad);
-        shapeRenderer.triangle(-TANK_BASE/2, 0, -TANK_TOP/2, TANK_HEIGHT, TANK_BASE/2, 0);
-        shapeRenderer.triangle(-TANK_TOP/2, TANK_HEIGHT,  TANK_TOP/2, TANK_HEIGHT, TANK_BASE/2, 0);
+        shapeRenderer.triangle(
+                -TANK_BASE/2, 0,
+                -TANK_TOP/2, TANK_HEIGHT,
+                TANK_BASE/2, 0);
+        shapeRenderer.triangle(
+                -TANK_TOP/2, TANK_HEIGHT,
+                TANK_TOP/2, TANK_HEIGHT,
+                TANK_BASE/2, 0);
         shapeRenderer.setTransformMatrix(matrix);
     }
 }

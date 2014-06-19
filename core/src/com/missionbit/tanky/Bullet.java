@@ -14,13 +14,16 @@ import com.badlogic.gdx.physics.box2d.World;
  * Created by bob on 6/18/14.
  */
 public class Bullet {
-    static final float BULLET_RADIUS = 4f;
+    static final float BULLET_RADIUS = 1.0f;
+    static final float DENSITY       = 10.0f;
+    static final float FRICTION      = 0.8f;
+    static final float RESTITUTION   = 0.2f;
 
     public static Body createBullet(World world, Vector2 position, Vector2 linearVelocity) {
         FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.density = 0.1f;
-        fixtureDef.friction = 0.2f;
-        fixtureDef.restitution = 0.6f;
+        fixtureDef.density = DENSITY;
+        fixtureDef.friction = FRICTION;
+        fixtureDef.restitution = RESTITUTION;
         CircleShape circleShape = new CircleShape();
         circleShape.setRadius(BULLET_RADIUS);
         fixtureDef.shape = circleShape;

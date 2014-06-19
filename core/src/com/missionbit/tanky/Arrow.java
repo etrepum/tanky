@@ -10,9 +10,10 @@ import com.badlogic.gdx.math.Vector2;
  * Created by bob on 6/18/14.
  */
 public final class Arrow {
-    static final float LINE_WIDTH = 10f;
+    static final float LINE_WIDTH   = 2.5f;
     static final float LINE_PERCENT = 0.9f;
-    static final float HEAD_WIDTH = 2.5f * LINE_WIDTH;
+    static final float HEAD_WIDTH   = 2.5f * LINE_WIDTH;
+
     public static void render(ShapeRenderer shapeRenderer, Color color, Vector2 position, float angleRad, float magnitude) {
         shapeRenderer.setColor(color);
         Matrix4 matrix = new Matrix4(shapeRenderer.getTransformMatrix());

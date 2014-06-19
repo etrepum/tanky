@@ -17,9 +17,11 @@ import java.util.Random;
 
 public class TankyGame extends ApplicationAdapter {
     private static final String TAG = TankyGame.class.getSimpleName();
-    static final float WIDTH = 800;
-    static final float HEIGHT = 480;
-    static final int STEPS = (int)WIDTH;
+    static final float WIDTH              = 200;
+    static final float HEIGHT             = 120;
+    static final int   STEPS              = 800;
+    static final float GRAVITY            = -10;
+    static final float BULLET_POWER_SCALE = 20;
 
     float absTime = 0;
     float[] terrain;
@@ -35,7 +37,7 @@ public class TankyGame extends ApplicationAdapter {
 	public void create () {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, WIDTH, HEIGHT);
-        world = new World(new Vector2(0, -10), true);
+        world = new World(new Vector2(0, GRAVITY), true);
         shapeRenderer = new ShapeRenderer();
         bullets = new ArrayList<Body>();
         reset();
@@ -48,7 +50,7 @@ public class TankyGame extends ApplicationAdapter {
 
     private void fire(Body body, Vector2 point) {
         Vector2 delta = new Vector2(WIDTH/2, HEIGHT/2).sub(point);
-        Vector2 pos = delta.cpy().nor().scl(20).add(body.getPosition());
+        Vector2 pos = delta.cpy().nor().scl(BULLET_POWER_SCALE).add(body.getPosition());
         bullets.add(Bullet.createBullet(world, pos, delta));
     }
 
@@ -74,9 +76,9 @@ public class TankyGame extends ApplicationAdapter {
         }
         bullets.clear();
 
+        float tankSpawnX = WIDTH * MathUtils.random(0.05f, 0.40f);
         terrainBody = Terrain.createBody(world, WIDTH, HEIGHT, terrain, STEPS);
-        tankBody = Tank.createBody(world, new Vector2(WIDTH/2, HEIGHT+10));
-
+        tankBody = Tank.createBody(world, new Vector2(tankSpawnX, HEIGHT));
     }
 
     public void updateGame () {
@@ -103,14 +105,14 @@ public class TankyGame extends ApplicationAdapter {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         Terrain.render(shapeRenderer, Color.YELLOW, WIDTH, terrain, STEPS);
         Vector2 tankPos = tankBody.getPosition();
-        Tank.render(shapeRenderer, Color.BLACK, tankPos, tankBody.getAngle());
+        Tank.render(shapeRenderer, Color.RED, tankPos, tankBody.getAngle());
         if (touchPoint != null) {
             Vector2 delta = new Vector2(WIDTH/2, HEIGHT/2).sub(touchPoint);
             float theta = MathUtils.atan2(delta.y, delta.x);
             Arrow.render(shapeRenderer, Color.RED, tankPos, theta, delta.len());
         }
         for (Body bullet : bullets) {
-            Bullet.render(shapeRenderer, Color.LIGHT_GRAY, bullet.getPosition());
+            Bullet.render(shapeRenderer, Color.BLACK, bullet.getPosition());
         }
         shapeRenderer.end();
     }
