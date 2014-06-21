@@ -153,11 +153,16 @@ public class TankyGame extends ApplicationAdapter {
         if (shouldReset) {
             reset();
         }
-        for (Body bullet : explodingBullets) {
-            bullets.remove(bullet);
-            world.destroyBody(bullet);
+        if (!explodingBullets.isEmpty()) {
+            for (Body bullet : explodingBullets) {
+                bullets.remove(bullet);
+                Terrain.deform(WIDTH, terrain, STEPS, bullet.getWorldCenter(), 10f);
+                world.destroyBody(bullet);
+            }
+            explodingBullets.clear();
+            world.destroyBody(terrainBody);
+            terrainBody = Terrain.createBody(world, WIDTH, HEIGHT, terrain, STEPS);
         }
-        explodingBullets.clear();
         while (!fireEvents.isEmpty()) {
             fire(tankBody, fireEvents.remove());
         }

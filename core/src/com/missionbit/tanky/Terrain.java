@@ -33,16 +33,26 @@ public final class Terrain {
         return body;
     }
 
-    public static void deform(float[] terrain, int steps, Vector2 pos, float r) {
-        for (int i = Math.round((pos.x - r) / steps); i < Math.round((pos.y + r) / steps); i++) {
-            float x = r * (-1f + (i / r));
-            if (Math.abs(x) <= r) {
-                // r = x^2 + y^2
+    public static int terrainIndex(float WIDTH, int steps, float x) {
+        return Math.round(x * steps / WIDTH);
+    }
+
+    public static void deform(float WIDTH, float[] terrain, int steps, Vector2 pos, float r) {
+        int i0 = Math.max(0, terrainIndex(WIDTH, steps, pos.x - r));
+        int i1 = Math.min(steps - 1, terrainIndex(WIDTH, steps, pos.x + r));
+        float r2 = r * r;
+        float dx = WIDTH / steps;
+        for (int i = i0; i <= i1; i += 1) {
+            float x = i * dx - pos.x;
+            double y2 = (double)(r2 - x * x);
+            if (y2 > 0) {
+                // r^2 = x^2 + y^2
                 // y^2 = r - x^2
-                // y = +-sqrt(r - x^2)
+                // y = +-sqrt(r^2 - x^2)
+                float y = (float)Math.sqrt(y2);
                 terrain[i] = MathUtils.clamp(
-                        pos.y - (float)Math.sqrt((double)(r - x * x)),
-                        0,
+                        pos.y - y,
+                        Math.max(0, terrain[i] - 2 * y),
                         terrain[i]);
             }
         }
