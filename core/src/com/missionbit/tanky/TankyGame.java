@@ -21,7 +21,7 @@ import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Random;
 
-public class TankyGame extends ApplicationAdapter {
+public final class TankyGame extends ApplicationAdapter {
     private static final String TAG = TankyGame.class.getSimpleName();
     static final float WIDTH              = 200f;
     static final float HEIGHT             = 120f;
@@ -40,6 +40,7 @@ public class TankyGame extends ApplicationAdapter {
     Vector2 touchVector = null;
     Vector2 firstTouchPoint = null;
     ArrayDeque<Vector2> fireEvents;
+    ArrayDeque<Explosion> explosions;
     HashSet<Body> bullets;
     HashSet<Body> explodingBullets;
     OrthographicCamera camera;
@@ -54,6 +55,7 @@ public class TankyGame extends ApplicationAdapter {
         shapeRenderer = new ShapeRenderer();
         bullets = new HashSet<Body>();
         explodingBullets = new HashSet<Body>();
+        explosions = new ArrayDeque<Explosion>();
         Gdx.input.setInputProcessor(new InputAdapter() {
             public boolean touchDown(int x, int y, int pointer, int button) {
                 if (pointer == 0) {
@@ -85,6 +87,7 @@ public class TankyGame extends ApplicationAdapter {
                 Body b = contact.getFixtureB().getBody();
                 BodyTag aTag = (BodyTag)a.getUserData();
                 BodyTag bTag = (BodyTag)b.getUserData();
+                // We only care if at least one of the fixtures is a bullet
                 if ((aTag.type == BodyTag.BodyType.BULLET || bTag.type == BodyTag.BodyType.BULLET)
                         && contact.isTouching()) {
                     if (aTag.type == BodyTag.BodyType.BULLET) {
@@ -133,6 +136,7 @@ public class TankyGame extends ApplicationAdapter {
         shouldReset = false;
         terrain = new TerrainBuilder(new Random(), STEPS, HEIGHT, 0.6f, 0.5f).build();
         fireEvents.clear();
+        explosions.clear();
         if (terrainBody != null) {
             world.destroyBody(terrainBody);
         }
@@ -153,15 +157,28 @@ public class TankyGame extends ApplicationAdapter {
         if (shouldReset) {
             reset();
         }
+        boolean terrainDirty = false;
+        while (!explosions.isEmpty()) {
+            Explosion explosion = explosions.getFirst();
+            if (explosion.shouldRemove(absTime)) {
+                terrainDirty = true;
+                explosions.removeFirst();
+                Terrain.deform(WIDTH, terrain, STEPS, explosion.position, 10f);
+            } else {
+                break;
+            }
+        }
+        if (terrainDirty) {
+            world.destroyBody(terrainBody);
+            terrainBody = Terrain.createBody(world, WIDTH, HEIGHT, terrain, STEPS);
+        }
         if (!explodingBullets.isEmpty()) {
             for (Body bullet : explodingBullets) {
                 bullets.remove(bullet);
-                Terrain.deform(WIDTH, terrain, STEPS, bullet.getWorldCenter(), 10f);
+                explosions.add(new Explosion(absTime, bullet.getWorldCenter()));
                 world.destroyBody(bullet);
             }
             explodingBullets.clear();
-            world.destroyBody(terrainBody);
-            terrainBody = Terrain.createBody(world, WIDTH, HEIGHT, terrain, STEPS);
         }
         while (!fireEvents.isEmpty()) {
             fire(tankBody, fireEvents.remove());
@@ -181,6 +198,9 @@ public class TankyGame extends ApplicationAdapter {
         }
         for (Body bullet : bullets) {
             Bullet.render(shapeRenderer, Color.BLACK, bullet.getPosition());
+        }
+        for (Explosion explosion : explosions) {
+            explosion.render(shapeRenderer, Color.DARK_GRAY, absTime);
         }
         shapeRenderer.end();
     }

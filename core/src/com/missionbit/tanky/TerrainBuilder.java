@@ -8,7 +8,7 @@ import java.util.Random;
 /**
  * http://www.somethinghitme.com/2013/11/11/simple-2d-terrain-with-midpoint-displacement/
  */
-public class TerrainBuilder {
+public final class TerrainBuilder {
     final int m_steps;
     final float m_height;
     final float m_roughness;

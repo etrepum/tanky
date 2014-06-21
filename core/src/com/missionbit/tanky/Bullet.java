@@ -13,7 +13,7 @@ import com.badlogic.gdx.physics.box2d.World;
 /**
  * Created by bob on 6/18/14.
  */
-public class Bullet {
+public final class Bullet {
     static final float BULLET_RADIUS = 1.0f;
     static final float DENSITY       = 10.0f;
     static final float FRICTION      = 0.8f;

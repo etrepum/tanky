@@ -3,7 +3,7 @@ package com.missionbit.tanky;
 /**
  * Created by bob on 6/20/14.
  */
-public class BodyTag {
+public final class BodyTag {
     public enum BodyType {
         TANK, BULLET, BodyType, TERRAIN
     }
