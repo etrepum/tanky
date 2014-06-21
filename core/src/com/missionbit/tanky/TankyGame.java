@@ -2,6 +2,7 @@ package com.missionbit.tanky;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -10,36 +11,97 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.Contact;
+import com.badlogic.gdx.physics.box2d.ContactImpulse;
+import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.World;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.Random;
 
 public class TankyGame extends ApplicationAdapter {
     private static final String TAG = TankyGame.class.getSimpleName();
-    static final float WIDTH              = 200;
-    static final float HEIGHT             = 120;
+    static final float WIDTH              = 200f;
+    static final float HEIGHT             = 120f;
     static final int   STEPS              = 800;
-    static final float GRAVITY            = -10;
-    static final float BULLET_POWER_SCALE = 20;
+    static final float GRAVITY            = -10f;
+    static final float BULLET_POWER_SCALE = 1f;
+    static final float BULLET_TANK_RADIUS = 10f;
+    static final float BULLET_MINIMUM_POWER = 5f;
 
     float absTime = 0;
     float[] terrain;
+    boolean shouldReset = false;
     World world;
     Body terrainBody = null;
     Body tankBody = null;
-    Vector2 touchPoint = null;
-    ArrayList<Body> bullets;
+    Vector2 touchVector = null;
+    Vector2 firstTouchPoint = null;
+    ArrayDeque<Vector2> fireEvents;
+    HashSet<Body> bullets;
+    HashSet<Body> explodingBullets;
     OrthographicCamera camera;
     ShapeRenderer shapeRenderer;
 
 	@Override
 	public void create () {
+        fireEvents = new ArrayDeque<Vector2>();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, WIDTH, HEIGHT);
         world = new World(new Vector2(0, GRAVITY), true);
         shapeRenderer = new ShapeRenderer();
-        bullets = new ArrayList<Body>();
+        bullets = new HashSet<Body>();
+        explodingBullets = new HashSet<Body>();
+        Gdx.input.setInputProcessor(new InputAdapter() {
+            public boolean touchDown(int x, int y, int pointer, int button) {
+                if (pointer == 0) {
+                    touchVector = null;
+                    firstTouchPoint = screenToWorld(x, y);
+                } else {
+                    shouldReset = true;
+                }
+                return true;
+            }
+            public boolean touchDragged(int x, int y, int pointer) {
+                if (pointer == 0) {
+                    touchVector = (firstTouchPoint == null) ? null : screenToWorld(x, y).sub(firstTouchPoint);
+                }
+                return true;
+            }
+            public boolean touchUp(int x, int y, int pointer, int button) {
+                if (pointer == 0 && touchVector != null) {
+                    fireEvents.add(touchVector);
+                    touchVector = null;
+                    firstTouchPoint = null;
+                }
+                return true;
+            }
+        });
+        world.setContactListener(new ContactListener() {
+            public void beginContact(Contact contact) {
+                Body a = contact.getFixtureA().getBody();
+                Body b = contact.getFixtureB().getBody();
+                BodyTag aTag = (BodyTag)a.getUserData();
+                BodyTag bTag = (BodyTag)b.getUserData();
+                if ((aTag.type == BodyTag.BodyType.BULLET || bTag.type == BodyTag.BodyType.BULLET)
+                        && contact.isTouching()) {
+                    if (aTag.type == BodyTag.BodyType.BULLET) {
+                        explodingBullets.add(a);
+                    }
+                    if (bTag.type == BodyTag.BodyType.BULLET) {
+                        explodingBullets.add(b);
+                    }
+                }
+            }
+            public void endContact(Contact contact) {
+            }
+            public void preSolve(Contact contact, Manifold oldManifold) {
+            }
+            public void postSolve(Contact contact, ContactImpulse impulse) {
+            }
+        });
         reset();
 	}
 
@@ -48,10 +110,12 @@ public class TankyGame extends ApplicationAdapter {
         return new Vector2(v.x, v.y);
     }
 
-    private void fire(Body body, Vector2 point) {
-        Vector2 delta = new Vector2(WIDTH/2, HEIGHT/2).sub(point);
-        Vector2 pos = delta.cpy().nor().scl(BULLET_POWER_SCALE).add(body.getPosition());
-        bullets.add(Bullet.createBullet(world, pos, delta));
+    private void fire(Body tankBody, Vector2 delta) {
+        if (delta.len() > BULLET_MINIMUM_POWER) {
+            Vector2 pos = delta.cpy().nor().scl(BULLET_TANK_RADIUS).add(tankBody.getWorldCenter());
+            Vector2 linearVelocity = delta.cpy().scl(BULLET_POWER_SCALE).add(tankBody.getLinearVelocity());
+            bullets.add(Bullet.createBullet(world, pos, linearVelocity));
+        }
     }
 
 	@Override
@@ -59,12 +123,16 @@ public class TankyGame extends ApplicationAdapter {
         absTime += Gdx.graphics.getDeltaTime();
         camera.update();
         updateGame();
-        drawGame(touchPoint);
+        drawGame(touchVector);
         world.step(1/45f, 6, 2);
 	}
 
     private void reset() {
+        touchVector = null;
+        firstTouchPoint = null;
+        shouldReset = false;
         terrain = new TerrainBuilder(new Random(), STEPS, HEIGHT, 0.6f, 0.5f).build();
+        fireEvents.clear();
         if (terrainBody != null) {
             world.destroyBody(terrainBody);
         }
@@ -82,34 +150,29 @@ public class TankyGame extends ApplicationAdapter {
     }
 
     public void updateGame () {
-        if (Gdx.input.isTouched(1) && touchPoint != null) {
-            touchPoint = null;
+        if (shouldReset) {
             reset();
         }
-        if (Gdx.input.isTouched(0)) {
-            touchPoint = screenToWorld(
-                    Gdx.input.getX(0),
-                    Gdx.input.getY(0));
-        } else {
-            if (touchPoint != null) {
-                fire(tankBody, touchPoint);
-            }
-            touchPoint = null;
+        for (Body bullet : explodingBullets) {
+            bullets.remove(bullet);
+            world.destroyBody(bullet);
+        }
+        explodingBullets.clear();
+        while (!fireEvents.isEmpty()) {
+            fire(tankBody, fireEvents.remove());
         }
     }
 
-    public void drawGame (Vector2 touchPoint) {
+    public void drawGame (Vector2 shotVector) {
         Gdx.gl.glClearColor(135.0f / 255, 206.0f / 255, 235.0f / 255, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         Terrain.render(shapeRenderer, Color.YELLOW, WIDTH, terrain, STEPS);
-        Vector2 tankPos = tankBody.getPosition();
-        Tank.render(shapeRenderer, Color.RED, tankPos, tankBody.getAngle());
-        if (touchPoint != null) {
-            Vector2 delta = new Vector2(WIDTH/2, HEIGHT/2).sub(touchPoint);
-            float theta = MathUtils.atan2(delta.y, delta.x);
-            Arrow.render(shapeRenderer, Color.RED, tankPos, theta, delta.len());
+        Tank.render(shapeRenderer, Color.RED, tankBody.getPosition(), tankBody.getAngle());
+        if (shotVector != null && shotVector.len() > BULLET_MINIMUM_POWER) {
+            float theta = MathUtils.atan2(shotVector.y, shotVector.x);
+            Arrow.render(shapeRenderer, Color.RED, tankBody.getWorldCenter(), theta, shotVector.len());
         }
         for (Body bullet : bullets) {
             Bullet.render(shapeRenderer, Color.BLACK, bullet.getPosition());

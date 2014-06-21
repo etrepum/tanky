@@ -29,11 +29,13 @@ public class Bullet {
         fixtureDef.shape = circleShape;
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.DynamicBody;
+        bodyDef.bullet = true;
         bodyDef.linearVelocity.set(linearVelocity);
         bodyDef.position.set(position);
         Body body = world.createBody(bodyDef);
         body.createFixture(fixtureDef);
         circleShape.dispose();
+        body.setUserData(new BodyTag(BodyTag.BodyType.BULLET, "some bullet"));
         return body;
     }
 

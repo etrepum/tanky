@@ -15,13 +15,15 @@ import com.badlogic.gdx.physics.box2d.World;
  * Created by bob on 6/18/14.
  */
 public final class Tank {
-    // an M1 tank is about 10 meters long
+    // an M1 tank is about 10 meters long and 70 metric tons
     static final float TANK_BASE   = 10.0f;
     static final float TANK_TOP    = 7.5f;
     static final float TANK_HEIGHT = 6.25f;
-    static final float DENSITY     = 10.0f;
-    static final float FRICTION    = 0.8f;
-    static final float RESTITUTION = 0.2f;
+    static final float TANK_MASS   = 70000f;
+    static final float TANK_AREA   = TANK_HEIGHT * (TANK_TOP + TANK_BASE) / 2;
+    static final float DENSITY     = TANK_MASS / TANK_AREA;
+    static final float FRICTION    = 10f;
+    static final float RESTITUTION = 0.001f;
 
     public static Body createBody(World world, Vector2 position) {
         FixtureDef fixtureDef = new FixtureDef();
@@ -41,6 +43,7 @@ public final class Tank {
         bodyDef.position.set(position);
         Body body = world.createBody(bodyDef);
         body.createFixture(fixtureDef);
+        body.setUserData(new BodyTag(BodyTag.BodyType.TANK, "some tank"));
         tankShape.dispose();
         return body;
     }

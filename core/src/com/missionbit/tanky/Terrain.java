@@ -2,6 +2,7 @@ package com.missionbit.tanky;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -28,7 +29,23 @@ public final class Terrain {
         Body body = world.createBody(bodyDef);
         body.createFixture(chain, 0.0f);
         chain.dispose();
+        body.setUserData(new BodyTag(BodyTag.BodyType.TERRAIN, "world terrain"));
         return body;
+    }
+
+    public static void deform(float[] terrain, int steps, Vector2 pos, float r) {
+        for (int i = Math.round((pos.x - r) / steps); i < Math.round((pos.y + r) / steps); i++) {
+            float x = r * (-1f + (i / r));
+            if (Math.abs(x) <= r) {
+                // r = x^2 + y^2
+                // y^2 = r - x^2
+                // y = +-sqrt(r - x^2)
+                terrain[i] = MathUtils.clamp(
+                        pos.y - (float)Math.sqrt((double)(r - x * x)),
+                        0,
+                        terrain[i]);
+            }
+        }
     }
 
     public static void render(ShapeRenderer shapeRenderer, Color color, float WIDTH, float[] terrain, int steps) {
