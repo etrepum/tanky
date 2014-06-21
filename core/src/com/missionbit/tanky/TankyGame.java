@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 
-public final class TankyGame extends ApplicationAdapter {
+public final class TankyGame extends ApplicationAdapter implements ContactListener {
     private static final String TAG = TankyGame.class.getSimpleName();
     static final float WIDTH              = 200f;
     static final float HEIGHT             = 120f;
@@ -83,32 +83,35 @@ public final class TankyGame extends ApplicationAdapter {
                 return true;
             }
         });
-        world.setContactListener(new ContactListener() {
-            public void beginContact(Contact contact) {
-                Body a = contact.getFixtureA().getBody();
-                Body b = contact.getFixtureB().getBody();
-                BodyTag aTag = (BodyTag)a.getUserData();
-                BodyTag bTag = (BodyTag)b.getUserData();
-                // We only care if at least one of the fixtures is a bullet
-                if ((aTag.type == BodyTag.BodyType.BULLET || bTag.type == BodyTag.BodyType.BULLET)
-                        && contact.isTouching()) {
-                    if (aTag.type == BodyTag.BodyType.BULLET) {
-                        explodingBullets.add(a);
-                    }
-                    if (bTag.type == BodyTag.BodyType.BULLET) {
-                        explodingBullets.add(b);
-                    }
-                }
-            }
-            public void endContact(Contact contact) {
-            }
-            public void preSolve(Contact contact, Manifold oldManifold) {
-            }
-            public void postSolve(Contact contact, ContactImpulse impulse) {
-            }
-        });
+        world.setContactListener(this);
         reset();
 	}
+
+    public void beginContact(Contact contact) {
+        Body a = contact.getFixtureA().getBody();
+        Body b = contact.getFixtureB().getBody();
+        BodyTag aTag = (BodyTag)a.getUserData();
+        BodyTag bTag = (BodyTag)b.getUserData();
+        // We only care if at least one of the fixtures is a bullet
+        if ((aTag.type == BodyTag.BodyType.BULLET || bTag.type == BodyTag.BodyType.BULLET)
+                && contact.isTouching()) {
+            if (aTag.type == BodyTag.BodyType.BULLET) {
+                explodingBullets.add(a);
+            }
+            if (bTag.type == BodyTag.BodyType.BULLET) {
+                explodingBullets.add(b);
+            }
+        }
+    }
+
+    public void endContact(Contact contact) {
+    }
+
+    public void preSolve(Contact contact, Manifold oldManifold) {
+    }
+
+    public void postSolve(Contact contact, ContactImpulse impulse) {
+    }
 
     private Vector2 screenToWorld(int screenX, int screenY) {
         Vector3 v = camera.unproject(new Vector3(screenX, screenY, 0));

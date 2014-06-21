@@ -3,13 +3,11 @@ package com.missionbit.tanky;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Interpolation;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.Fixture;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.World;
 
 /**
@@ -33,7 +31,8 @@ public final class Explosion {
         bodyDef.type = BodyDef.BodyType.StaticBody;
         bodyDef.position.set(position);
         Body body = world.createBody(bodyDef);
-        body.createFixture(circleShape, 0.0f);
+        Fixture fixture = body.createFixture(circleShape, 0.0f);
+        fixture.setSensor(true);
         circleShape.dispose();
         body.setUserData(new BodyTag(BodyTag.BodyType.EXPLOSION, "some explosion"));
         return body;

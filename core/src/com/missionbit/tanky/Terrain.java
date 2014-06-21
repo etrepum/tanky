@@ -59,6 +59,9 @@ public final class Terrain {
     }
 
     public static void render(ShapeRenderer shapeRenderer, Color color, float WIDTH, float[] terrain, int steps) {
+        // TODO: Use one of the triangulation algorithms in libgdx?
+        // http://libgdx.badlogicgames.com/nightlies/docs/api/com/badlogic/gdx/math/DelaunayTriangulator.html
+        // http://libgdx.badlogicgames.com/nightlies/docs/api/com/badlogic/gdx/math/EarClippingTriangulator.html
         shapeRenderer.setColor(color);
         float dx = WIDTH / steps;
         for (int i = 0; i < steps - 1; i++) {
