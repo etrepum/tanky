@@ -16,9 +16,11 @@ import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.utils.Array;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
 
 public final class TankyGame extends ApplicationAdapter {
@@ -117,7 +119,7 @@ public final class TankyGame extends ApplicationAdapter {
         if (delta.len() > BULLET_MINIMUM_POWER) {
             Vector2 pos = delta.cpy().nor().scl(BULLET_TANK_RADIUS).add(tankBody.getWorldCenter());
             Vector2 linearVelocity = delta.cpy().scl(BULLET_POWER_SCALE).add(tankBody.getLinearVelocity());
-            bullets.add(Bullet.createBullet(world, pos, linearVelocity));
+            bullets.add(Bullet.createBody(world, pos, linearVelocity));
         }
     }
 
@@ -135,19 +137,16 @@ public final class TankyGame extends ApplicationAdapter {
         firstTouchPoint = null;
         shouldReset = false;
         terrain = new TerrainBuilder(new Random(), STEPS, HEIGHT, 0.6f, 0.5f).build();
+        terrainBody = null;
+        tankBody = null;
+        bullets.clear();
         fireEvents.clear();
         explosions.clear();
-        if (terrainBody != null) {
-            world.destroyBody(terrainBody);
+        Array<Body> bodies = new Array<Body>(world.getBodyCount());
+        world.getBodies(bodies);
+        for (Body body : bodies) {
+            world.destroyBody(body);
         }
-        if (tankBody != null) {
-            world.destroyBody(tankBody);
-        }
-        for (Body bullet : bullets) {
-            world.destroyBody(bullet);
-        }
-        bullets.clear();
-
         float tankSpawnX = WIDTH * MathUtils.random(0.05f, 0.40f);
         terrainBody = Terrain.createBody(world, WIDTH, HEIGHT, terrain, STEPS);
         tankBody = Tank.createBody(world, new Vector2(tankSpawnX, HEIGHT));
@@ -158,14 +157,14 @@ public final class TankyGame extends ApplicationAdapter {
             reset();
         }
         boolean terrainDirty = false;
-        while (!explosions.isEmpty()) {
-            Explosion explosion = explosions.getFirst();
-            if (explosion.shouldRemove(absTime)) {
+        Iterator<Explosion> explosionIterator = explosions.iterator();
+        while (explosionIterator.hasNext()) {
+            Explosion explosion = explosionIterator.next();
+            if (explosion.update(absTime)) {
+                explosionIterator.remove();
+                Terrain.deform(WIDTH, terrain, STEPS, explosion.body.getWorldCenter(), 10f);
+                world.destroyBody(explosion.body);
                 terrainDirty = true;
-                explosions.removeFirst();
-                Terrain.deform(WIDTH, terrain, STEPS, explosion.position, 10f);
-            } else {
-                break;
             }
         }
         if (terrainDirty) {
@@ -175,7 +174,8 @@ public final class TankyGame extends ApplicationAdapter {
         if (!explodingBullets.isEmpty()) {
             for (Body bullet : explodingBullets) {
                 bullets.remove(bullet);
-                explosions.add(new Explosion(absTime, bullet.getWorldCenter()));
+                Body explosionBody = Explosion.createBody(world, bullet.getWorldCenter());
+                explosions.add(new Explosion(explosionBody, absTime));
                 world.destroyBody(bullet);
             }
             explodingBullets.clear();

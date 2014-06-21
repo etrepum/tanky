@@ -19,7 +19,7 @@ public final class Bullet {
     static final float FRICTION      = 0.8f;
     static final float RESTITUTION   = 0.2f;
 
-    public static Body createBullet(World world, Vector2 position, Vector2 linearVelocity) {
+    public static Body createBody(World world, Vector2 position, Vector2 linearVelocity) {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.density = DENSITY;
         fixtureDef.friction = FRICTION;

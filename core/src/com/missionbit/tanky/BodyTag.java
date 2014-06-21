@@ -5,7 +5,7 @@ package com.missionbit.tanky;
  */
 public final class BodyTag {
     public enum BodyType {
-        TANK, BULLET, BodyType, TERRAIN
+        TANK, BULLET, EXPLOSION, TERRAIN
     }
 
     public final BodyType type;
@@ -22,6 +22,7 @@ public final class BodyTag {
         switch (type) {
             case TANK: tagName = "TANK"; break;
             case BULLET: tagName = "BULLET"; break;
+            case EXPLOSION: tagName = "EXPLOSION"; break;
             case TERRAIN: tagName = "TERRAIN"; break;
             default: throw new Error("Invalid BodyType");
         }
