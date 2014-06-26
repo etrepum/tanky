@@ -31,6 +31,7 @@ public final class TankyGame extends ApplicationAdapter implements ContactListen
     static final float GRAVITY            = -10f;
     static final float BULLET_POWER_SCALE = 1f;
     static final float BULLET_RECOIL_SCALE = -10000f;
+    static final float EXPLOSION_FORCE = 100000000f;
     static final float BULLET_TANK_RADIUS = 10f;
     static final float BULLET_MINIMUM_POWER = 5f;
 
@@ -170,6 +171,12 @@ public final class TankyGame extends ApplicationAdapter implements ContactListen
         while (explosionIterator.hasNext()) {
             Explosion explosion = explosionIterator.next();
             if (explosion.update(absTime)) {
+                Vector2 delta = tankBody.getWorldCenter().cpy().sub(explosion.body.getWorldCenter());
+                float dlen2 = delta.len2();
+                if (dlen2 > 0) {
+                    delta = delta.nor().scl(EXPLOSION_FORCE / dlen2);
+                    tankBody.applyLinearImpulse(delta, tankBody.getWorldCenter(), true);
+                }
                 explosionIterator.remove();
                 Terrain.deform(WIDTH, terrain, STEPS, explosion.body.getWorldCenter(), 10f);
                 world.destroyBody(explosion.body);
@@ -186,6 +193,7 @@ public final class TankyGame extends ApplicationAdapter implements ContactListen
                 Body explosionBody = Explosion.createBody(world, bullet.getWorldCenter());
                 explosions.add(new Explosion(explosionBody, absTime));
                 world.destroyBody(bullet);
+
             }
             explodingBullets.clear();
         }
