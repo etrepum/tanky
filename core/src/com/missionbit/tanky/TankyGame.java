@@ -30,6 +30,7 @@ public final class TankyGame extends ApplicationAdapter implements ContactListen
     static final int   STEPS              = 800;
     static final float GRAVITY            = -10f;
     static final float BULLET_POWER_SCALE = 1f;
+    static final float BULLET_RECOIL_SCALE = -10000f;
     static final float BULLET_TANK_RADIUS = 10f;
     static final float BULLET_MINIMUM_POWER = 5f;
 
@@ -122,7 +123,12 @@ public final class TankyGame extends ApplicationAdapter implements ContactListen
         if (delta.len() > BULLET_MINIMUM_POWER) {
             Vector2 pos = delta.cpy().nor().scl(BULLET_TANK_RADIUS).add(tankBody.getWorldCenter());
             Vector2 linearVelocity = delta.cpy().scl(BULLET_POWER_SCALE).add(tankBody.getLinearVelocity());
-            bullets.add(Bullet.createBody(world, pos, linearVelocity));
+            tankBody.applyLinearImpulse(linearVelocity.cpy().scl(BULLET_RECOIL_SCALE), tankBody.getWorldCenter(), true);
+            Body bullet = Bullet.createBody(world, pos, linearVelocity);
+            bullets.add(bullet);
+            if (Terrain.containsPoint(WIDTH, terrain, STEPS, pos)) {
+                explodingBullets.add(bullet);
+            }
         }
     }
 

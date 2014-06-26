@@ -18,14 +18,33 @@ public final class Terrain {
         bodyDef.type = BodyDef.BodyType.StaticBody;
         bodyDef.position.set(0, 0);
         ChainShape chain = new ChainShape();
+        float[] vertices = new float[2 * (6 + steps)];
         float dx = WIDTH / steps;
-        Vector2[] vertices = new Vector2[2 + steps];
-        vertices[0] = new Vector2(0, HEIGHT * 10);
-        for (int i = 0; i < steps; i++) {
-            vertices[i+1] = new Vector2(i * dx, terrain[i]);
+        float REALLY_HIGH = HEIGHT * 10;
+        int j = 0;
+        for (int i = steps - 1; i >= 0; i--) {
+            vertices[j++] = dx * i;
+            vertices[j++] = terrain[i];
         }
-        vertices[vertices.length - 1] = new Vector2(WIDTH, HEIGHT * 10);
-        chain.createChain(vertices);
+        // top left 0
+        vertices[j++] = 0;
+        vertices[j++] = REALLY_HIGH;
+        // top left -1
+        vertices[j++] = -dx;
+        vertices[j++] = REALLY_HIGH;
+        // bottom left -1
+        vertices[j++] = -dx;
+        vertices[j++] = 0;
+        // bottom right +1
+        vertices[j++] = dx * steps;
+        vertices[j++] = 0;
+        // top right +1
+        vertices[j++] = dx * steps;
+        vertices[j++] = REALLY_HIGH;
+        // top right 0
+        vertices[j++] = dx * (steps - 1);
+        vertices[j++] = REALLY_HIGH;
+        chain.createLoop(vertices);
         Body body = world.createBody(bodyDef);
         body.createFixture(chain, 0.0f);
         chain.dispose();
@@ -35,6 +54,11 @@ public final class Terrain {
 
     public static int terrainIndex(float WIDTH, int steps, float x) {
         return Math.round(x * steps / WIDTH);
+    }
+
+    public static boolean containsPoint(float WIDTH, float[] terrain, int steps, Vector2 pos) {
+        int i = Math.min(steps - 1, Math.max(0, terrainIndex(WIDTH, steps, pos.x)));
+        return terrain[i] >= pos.y;
     }
 
     public static void deform(float WIDTH, float[] terrain, int steps, Vector2 pos, float r) {
